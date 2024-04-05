@@ -38,6 +38,7 @@ public class GUI {
 
     }
 
+    //just for testing
     public static void main(String[] args){
         new GUI();
     }
