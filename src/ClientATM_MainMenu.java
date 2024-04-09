@@ -45,6 +45,8 @@ public class ClientATM_MainMenu extends JFrame{
     }
 
     public static void main(String[] args){
+        //dont run this by itself, this is just for testing sake
+        //run ClientATM_Login if you want to see the full proccess of logging in
         new ClientATM_MainMenu("test User");
     }
 

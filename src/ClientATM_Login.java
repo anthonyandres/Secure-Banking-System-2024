@@ -62,6 +62,8 @@ public class ClientATM_Login extends JFrame{
     }
 
     public static void main(String[] args){
+        //read users.txt for list of usernames and passwords
+        //for the lazy: user1 pass1
         new ClientATM_Login();
     }
 }
