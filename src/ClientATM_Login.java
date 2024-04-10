@@ -75,11 +75,22 @@ public class ClientATM_Login extends JFrame{
                          BufferedWriter bw = new BufferedWriter(fw);
                          PrintWriter out = new PrintWriter(bw)) {
                         out.print("\n"+username + " " + password);
-                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!");
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
                         ex.printStackTrace();
                     }
+
+                    // After successful registration, add default bank data (0 dollars to user's account)
+                    try (FileWriter fw = new FileWriter("bankData.txt", true);
+                         BufferedWriter bw = new BufferedWriter(fw);
+                         PrintWriter out = new PrintWriter(bw)) {
+                        out.print("\n"+username + " 0");
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
+                        ex.printStackTrace();
+                    }
+
                 }
             }
         });
