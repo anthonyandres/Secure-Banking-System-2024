@@ -9,6 +9,7 @@ public class ClientATM_MainMenu extends JFrame{
     private JButton deposit;
     private JButton balanceInquiry;
     private JButton withdrawal;
+    private JLabel tmp;
 
     public ClientATM_MainMenu(String user){
         setTitle("Client ATM");
@@ -23,7 +24,7 @@ public class ClientATM_MainMenu extends JFrame{
         deposit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                ClientATM_MainMenu.this.tmp.setText("deposit");
             }
         });
 
@@ -31,7 +32,7 @@ public class ClientATM_MainMenu extends JFrame{
         withdrawal.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                ClientATM_MainMenu.this.tmp.setText("withdrawal");
             }
         });
 
@@ -39,7 +40,7 @@ public class ClientATM_MainMenu extends JFrame{
         balanceInquiry.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                ClientATM_MainMenu.this.tmp.setText("balance inquiry");
             }
         });
     }
