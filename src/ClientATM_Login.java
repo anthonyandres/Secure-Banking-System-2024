@@ -1,8 +1,7 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.*;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -11,6 +10,7 @@ public class ClientATM_Login extends JFrame{
     private JPasswordField Password;
     public JTextField Username;
     private JButton loginButton;
+    private JButton registerButton;
 
     public ClientATM_Login() {
 
@@ -59,7 +59,50 @@ public class ClientATM_Login extends JFrame{
 
             }
         });
+        // Action listener for register button
+        registerButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String username = Username.getText();
+                String password = Password.getText();
+
+                // Validate if username already exists
+                if (isUsernameExists(username)) {
+                    JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
+                } else {
+                    // If username is unique, append it to the users.txt file
+                    try (FileWriter fw = new FileWriter("users.txt", true);
+                         BufferedWriter bw = new BufferedWriter(fw);
+                         PrintWriter out = new PrintWriter(bw)) {
+                        out.println(username + " " + password);
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!");
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
     }
+
+    // Method to check if username already exists
+    private boolean isUsernameExists(String username) {
+        File users = new File("users.txt");
+        try (Scanner scanner = new Scanner(users)) {
+            while (scanner.hasNextLine()) {
+                String userPass = scanner.nextLine();
+                String[] verify = userPass.split("\\s+");
+                if (Objects.equals(verify[0], username)) {
+                    return true; // Username already exists
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false; // Username is unique
+    }
+
+
 
     public static void main(String[] args){
         //read users.txt for list of usernames and passwords
