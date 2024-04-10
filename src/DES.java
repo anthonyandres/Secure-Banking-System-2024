@@ -7,9 +7,9 @@ public class DES {
     Cipher encryptCipher = Cipher.getInstance("DES");
     Cipher decryptCipher = Cipher.getInstance("DES");
     //DES(SecretKey key) throws Exception {
-    DES(Key masterKey) throws Exception {
-        this.encryptCipher.init(1, masterKey);
-        this.decryptCipher.init(2, masterKey);
+    DES(Key key) throws Exception {
+        this.encryptCipher.init(1, key);
+        this.decryptCipher.init(2, key);
     }
 
     public String encrypt(String toEncrypt) throws Exception {
