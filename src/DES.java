@@ -1,3 +1,4 @@
+import java.security.Key;
 import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -5,10 +6,10 @@ import javax.crypto.SecretKey;
 public class DES {
     Cipher encryptCipher = Cipher.getInstance("DES");
     Cipher decryptCipher = Cipher.getInstance("DES");
-
-    DES(SecretKey key) throws Exception {
-        this.encryptCipher.init(1, key);
-        this.decryptCipher.init(2, key);
+    //DES(SecretKey key) throws Exception {
+    DES(Key masterKey) throws Exception {
+        this.encryptCipher.init(1, masterKey);
+        this.decryptCipher.init(2, masterKey);
     }
 
     public String encrypt(String toEncrypt) throws Exception {
