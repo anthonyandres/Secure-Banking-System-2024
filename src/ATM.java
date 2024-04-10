@@ -61,8 +61,10 @@ public class ATM {
             //creating rsa class for encryption/decryption
             RSA rsa = new RSA();
 
-            //begin master key distribution protocol here:
+            //begin master key distribution/authentication protocol here:
 
+
+            //after authentication call GUI forms:
 
 
 
