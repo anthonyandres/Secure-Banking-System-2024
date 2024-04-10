@@ -74,7 +74,7 @@ public class ClientATM_Login extends JFrame{
                     try (FileWriter fw = new FileWriter("users.txt", true);
                          BufferedWriter bw = new BufferedWriter(fw);
                          PrintWriter out = new PrintWriter(bw)) {
-                        out.println(username + " " + password);
+                        out.print("\n"+username + " " + password);
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!");
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
