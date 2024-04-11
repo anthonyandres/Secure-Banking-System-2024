@@ -168,39 +168,6 @@ public class ClientATM_Login extends JFrame{
                 } catch (Exception e2) {
                     throw new RuntimeException(e2);
                 }
-
-
-
-
-//                String username = Username.getText();
-//                String password = Password.getText();
-//
-//                // Validate if username already exists
-//                if (isUsernameExists(username)) {
-//                    JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
-//                } else {
-//                    // If username is unique, append it to the users.txt file
-//                    try (FileWriter fw = new FileWriter("users.txt", true);
-//                         BufferedWriter bw = new BufferedWriter(fw);
-//                         PrintWriter out = new PrintWriter(bw)) {
-//                        out.print("\n"+username + " " + password);
-//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
-//                    } catch (IOException ex) {
-//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
-//                        ex.printStackTrace();
-//                    }
-//
-//                    // After successful registration, add default bank data (0 dollars to user's account)
-//                    try (FileWriter fw = new FileWriter("bankData.txt", true);
-//                         BufferedWriter bw = new BufferedWriter(fw);
-//                         PrintWriter out = new PrintWriter(bw)) {
-//                        out.print(username + " 0");
-//                    } catch (IOException ex) {
-//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
-//                        ex.printStackTrace();
-//                    }
-//
-//                }
             }
         });
     }
