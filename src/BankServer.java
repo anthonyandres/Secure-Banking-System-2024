@@ -1,3 +1,5 @@
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.io.*;
 import java.net.*;
 import java.security.*;
@@ -22,6 +24,7 @@ public class BankServer {
         KeyPair keyPair = generateKeyPair();
         PublicKey publicKey = keyPair.getPublic();
         PrivateKey privateKey = keyPair.getPrivate();
+        SecretKey masterKey = KeyGenerator.getInstance("DES").generateKey();
         System.out.println("creating publicKey file");
         ObjectOutputStream publicStream = new ObjectOutputStream(new FileOutputStream("BankPublicKey.xx"));
         publicStream.writeObject(publicKey);
@@ -30,6 +33,10 @@ public class BankServer {
         ObjectOutputStream privateStream = new ObjectOutputStream(new FileOutputStream("BankPrivateKey.xx"));
         privateStream.writeObject(privateKey);
         privateStream.close();
+        System.out.println("creating masterKey file");
+        ObjectOutputStream masterStream = new ObjectOutputStream(new FileOutputStream("MasterKey.xx"));
+        masterStream.writeObject(masterKey);
+        masterStream.close();
 
         int portNumber = 4444;
         boolean listening = true;
