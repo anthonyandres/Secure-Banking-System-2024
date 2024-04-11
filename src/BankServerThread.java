@@ -324,6 +324,8 @@ public class BankServerThread extends Thread{
                             output.println(encryptedFailure);
                             //JOptionPane.showMessageDialog(ClientATM_Login.this, "Invalid Login!");
                         }
+                        Double zero = 0.0;
+                        logAction(username, "login", zero);
                         break;
 
                     case "register":
@@ -404,6 +406,8 @@ public class BankServerThread extends Thread{
                             }
 
                         }
+                        Double zeroRE = 0.0;
+                        logAction(usernameRE, "registration", zeroRE);
                         break;
 
                     default:
