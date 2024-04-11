@@ -1,3 +1,4 @@
+import javax.crypto.SecretKey;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,10 +20,12 @@ public class ClientATM_MainMenu extends JFrame{
     private JLabel tmp;
     double balance = 0;
     private String currentUser;
+    private SecretKey masterKey;
     private Map<String, Double> userBalanceMap = new HashMap<>();
 
-    public ClientATM_MainMenu(String user){
+    public ClientATM_MainMenu(String user, SecretKey masterKey){
         this.currentUser = user;
+        this.masterKey = masterKey;
         setTitle("Client ATM");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(500, 300);
@@ -52,8 +55,23 @@ public class ClientATM_MainMenu extends JFrame{
                         PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
                         BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
                 ){
+                    //sending to Bank thread to know who it is and what they are doing
                     output.println("deposit");
-                    //all user prompts go here
+                    output.println(user);
+
+                    //get amount needed to deposit, since this is being sent it must be secure
+                    //append with MAC to ensure integrity, then encrypt to ensure confidentiality
+                    String depositAmountString = JOptionPane.showInputDialog("Enter deposit amount:");
+                    depositAmountString = depositAmountString.concat(" ");//add whitespace to separate MAC
+                    DES des = new DES(masterKey);
+                    MAC mac = new MAC();
+                    String MAC = mac.createMAC(depositAmountString, masterKey);
+                    String depositMACAppend = depositAmountString.concat(MAC);
+                    String encryptedDepositMac = des.encrypt(depositMACAppend);
+                    System.out.println("sending secure data: " + depositMACAppend);
+
+                    //sending encrypted amount, bank will deal with it and update the bankData (bankData is meant for the bank ONLY)
+                    output.println(encryptedDepositMac);
 
 
 
@@ -184,6 +202,6 @@ public class ClientATM_MainMenu extends JFrame{
     public static void main(String[] args){
         // Don't run this by itself, this is just for testing sake
         // Run ClientATM_Login if you want to see the full process of logging in
-        new ClientATM_MainMenu("test User");
+        //new ClientATM_MainMenu("test User");
     }
 }

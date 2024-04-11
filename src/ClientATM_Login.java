@@ -1,3 +1,4 @@
+import javax.crypto.SecretKey;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,8 +12,10 @@ public class ClientATM_Login extends JFrame{
     public JTextField Username;
     private JButton loginButton;
     private JButton registerButton;
+    private SecretKey masterKey;
 
-    public ClientATM_Login() throws IOException {
+    public ClientATM_Login(SecretKey masterKey) throws IOException {
+        this.masterKey = masterKey;
 
         setTitle("Client ATM Login");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -55,7 +58,7 @@ public class ClientATM_Login extends JFrame{
                         invalid = false;
                         ClientATM_Login.this.dispose();
                         //ClientATM_Login.this.setVisible(false);
-                        new ClientATM_MainMenu(username);
+                        new ClientATM_MainMenu(username, masterKey);
                         break;
                     }
                 }
@@ -91,7 +94,7 @@ public class ClientATM_Login extends JFrame{
                     try (FileWriter fw = new FileWriter("bankData.txt", true);
                          BufferedWriter bw = new BufferedWriter(fw);
                          PrintWriter out = new PrintWriter(bw)) {
-                        out.print("\n"+username + " 0");
+                        out.print(username + " 0");
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
                         ex.printStackTrace();
@@ -124,6 +127,6 @@ public class ClientATM_Login extends JFrame{
     public static void main(String[] args) throws IOException {
         //read users.txt for list of usernames and passwords
         //for the lazy: user1 pass1
-        new ClientATM_Login();
+        //new ClientATM_Login();
     }
 }

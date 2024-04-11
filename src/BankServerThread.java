@@ -1,13 +1,18 @@
 import javax.crypto.SecretKey;
 import javax.crypto.KeyGenerator;
+import javax.swing.*;
 import java.net.*;
 import java.io.*;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Base64;
+import java.util.Map;
+import java.util.Scanner;
 
 public class BankServerThread extends Thread{
     static int nonce = 1 + (int)(Math.random() * 99999.0);
@@ -101,7 +106,53 @@ public class BankServerThread extends Thread{
             else{
                 switch(ATMID){
                     case "deposit":
-                        System.out.println("\nuser wants to deposit");
+                        //read master key file for this thread to get the master key
+                        ObjectInputStream masterinput = new ObjectInputStream(new FileInputStream("MasterKey.xx"));
+                        SecretKey masterKey = (SecretKey) masterinput.readObject();
+                        masterinput.close();
+
+
+                        DES des = new DES(masterKey);
+                        String user = input.readLine();
+                        String encryptedMAC = input.readLine();
+                        String decryptedMAC = des.decrypt(encryptedMAC);
+                        System.out.println("decrypted data: " + decryptedMAC);
+                        //result[0] contains deposit amount
+                        //result[1] contains MAC for deposit amount
+                        String[] result = decryptedMAC.split(" ");
+                        MAC mac = new MAC();
+                        String recreatedMac = mac.createMAC(result[0], masterKey);
+                        System.out.println("recreated Mac: " + result[1] + "\nmatched MAC!");
+
+                        //updating bankData.txt
+                        String depositAmountString = result[0];
+                        double depositAmount = Double.parseDouble(depositAmountString);
+                        String depositAmountDString = String.format("%.2f" ,depositAmount);
+                        System.out.println("\nuser wants to deposit $" + depositAmountDString);
+
+                        Scanner scanner = new Scanner(new File("bankData.txt"));
+                        StringBuffer buffer = new StringBuffer();
+                        while(scanner.hasNextLine()){
+                            String line = scanner.nextLine();
+                            if(line.startsWith(user)){
+                                String[] parts = line.split(" ");
+                                Double balance = Double.parseDouble(parts[1]);
+                                balance = balance + depositAmount;
+                                String newBalance = String.format("%.2f", balance);
+                                buffer.append(user + " " + newBalance+System.lineSeparator());
+                            }
+                            else {
+                                buffer.append(line+System.lineSeparator());
+                            }
+                        }
+                        String fileContents = buffer.toString();
+                        System.out.println("Contents of the file: " + fileContents);
+                        scanner.close();
+                        FileWriter writer = new FileWriter("bankData.txt");
+                        writer.append(fileContents);
+                        writer.flush();
+
+
                         break;
 
                     case "withdrawal":
@@ -126,10 +177,37 @@ public class BankServerThread extends Thread{
         }
     }
 
-    private void printToAllClients(String message) {
-        for (BankServerThread sT : threadList) {
-            sT.output.println(message);
+//    //Method to save user balances to file
+//    void saveBalances() {
+//        //userBalanceMap.put(currentUser, balance);
+//        try (PrintWriter writer = new PrintWriter(new FileWriter("bankData.txt"))) {
+//            for (Map.Entry<String, Double> entry : userBalanceMap.entrySet()) {
+//                writer.println(entry.getKey() + " " + entry.getValue());
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Error saving user balances to file.");
+//        }
+//    }
+
+    //Method to log user actions
+    void logAction(String user, String action, double amount) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("audit_log.txt", true))) {
+            //Get current time
+            LocalDateTime currentTime = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String formattedTime = currentTime.format(formatter);
+
+            //Write log entry to file
+            writer.println(user + " " + action + " $" + String.format("%.2f", amount) + " " + formattedTime);
+            output.println("success");
+        } catch (IOException e) {
+            e.printStackTrace();
+            //If unable to write to file
+            output.println("error");
+
+            //show this on the main menu after receiving "error"
+            //JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Error writing to audit log!");
         }
     }
-
 }
