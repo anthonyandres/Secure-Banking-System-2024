@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -41,8 +43,30 @@ public class ClientATM_MainMenu extends JFrame{
         deposit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Call deposit handler
-                new Deposit(ClientATM_MainMenu.this, currentUser).handleDeposit();
+
+                String hostName = "localhost";
+                int portNumber = 4444;
+
+                try(
+                        Socket kkSocket = new Socket(hostName, portNumber);
+                        PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
+                ){
+                    output.println("deposit");
+                    //all user prompts go here
+
+
+
+                } catch (UnknownHostException e2) {
+                    System.err.println("Don't know about host " + hostName);
+                    System.exit(1);
+                } catch (IOException e2) {
+                    System.err.println("Couldn't get I/O for the connection to " +
+                            hostName);
+                    System.exit(1);
+                } catch (Exception e2) {
+                    throw new RuntimeException(e2);
+                }
             }
         });
 
@@ -50,8 +74,30 @@ public class ClientATM_MainMenu extends JFrame{
         withdrawal.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Call withdrawal handler
-                new Withdrawal(ClientATM_MainMenu.this, currentUser).handleWithdrawal();
+
+                String hostName = "localhost";
+                int portNumber = 4444;
+
+                try(
+                        Socket kkSocket = new Socket(hostName, portNumber);
+                        PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
+                ){
+                    output.println("withdrawal");
+                    //all user prompts go here
+
+
+
+                } catch (UnknownHostException e2) {
+                    System.err.println("Don't know about host " + hostName);
+                    System.exit(1);
+                } catch (IOException e2) {
+                    System.err.println("Couldn't get I/O for the connection to " +
+                            hostName);
+                    System.exit(1);
+                } catch (Exception e2) {
+                    throw new RuntimeException(e2);
+                }
             }
         });
 
@@ -59,8 +105,30 @@ public class ClientATM_MainMenu extends JFrame{
         balanceInquiry.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Call balance inquiry handler
-                new BalanceInquiry(ClientATM_MainMenu.this, currentUser, balance).handleBalanceInquiry();
+
+                String hostName = "localhost";
+                int portNumber = 4444;
+
+                try(
+                        Socket kkSocket = new Socket(hostName, portNumber);
+                        PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
+                ){
+                    output.println("inquiry");
+                    //all user prompts (if any) go here
+
+
+
+                } catch (UnknownHostException e2) {
+                    System.err.println("Don't know about host " + hostName);
+                    System.exit(1);
+                } catch (IOException e2) {
+                    System.err.println("Couldn't get I/O for the connection to " +
+                            hostName);
+                    System.exit(1);
+                } catch (Exception e2) {
+                    throw new RuntimeException(e2);
+                }
             }
         });
     }

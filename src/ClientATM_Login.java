@@ -12,7 +12,7 @@ public class ClientATM_Login extends JFrame{
     private JButton loginButton;
     private JButton registerButton;
 
-    public ClientATM_Login() {
+    public ClientATM_Login() throws IOException {
 
         setTitle("Client ATM Login");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -21,6 +21,13 @@ public class ClientATM_Login extends JFrame{
         setVisible(true);
         setContentPane(LoginPanel);
 
+        File users = new File("users.txt");
+        if(users.createNewFile()){
+            System.out.println("File created: " + users.getName());
+        }
+        else{
+            System.out.println("accessing users");
+        }
 
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -37,7 +44,7 @@ public class ClientATM_Login extends JFrame{
                 }
 
                 boolean invalid = true;
-                //loop throuh entire list of users
+                //loop through entire list of users
                 while (scanner.hasNextLine()) {
                     String userPass = scanner.nextLine();
                     String[] verify = userPass.split("\\s+");
@@ -56,7 +63,6 @@ public class ClientATM_Login extends JFrame{
                 if(invalid==true){
                     JOptionPane.showMessageDialog(ClientATM_Login.this, "Invalid Login!");
                 }
-
             }
         });
         // Action listener for register button
@@ -115,7 +121,7 @@ public class ClientATM_Login extends JFrame{
 
 
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws IOException {
         //read users.txt for list of usernames and passwords
         //for the lazy: user1 pass1
         new ClientATM_Login();
