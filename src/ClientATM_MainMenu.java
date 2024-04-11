@@ -15,7 +15,7 @@ public class ClientATM_MainMenu extends JFrame{
     private JButton balanceInquiry;
     private JButton withdrawal;
     private JLabel tmp;
-    private double balance = 0;
+    double balance = 0;
     private String currentUser;
     private Map<String, Double> userBalanceMap = new HashMap<>();
 
@@ -41,18 +41,8 @@ public class ClientATM_MainMenu extends JFrame{
         deposit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Asks user for deposit amount
-                String depositAmountString = JOptionPane.showInputDialog(ClientATM_MainMenu.this, "Enter deposit amount:");
-                try {
-                    double depositAmount = Double.parseDouble(depositAmountString);
-                    //Perform deposit operation
-                    deposit(depositAmount);
-                    //Log the deposit
-                    logAction(user, "deposit", depositAmount);
-                } catch (NumberFormatException ex) {
-                    //If user enters invalid input
-                    JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Invalid amount. Please enter a valid number.");
-                }
+                // Call deposit handler
+                new Deposit(ClientATM_MainMenu.this, currentUser).handleDeposit();
             }
         });
 
@@ -60,18 +50,8 @@ public class ClientATM_MainMenu extends JFrame{
         withdrawal.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Asks user for withdrawal amount
-                String withdrawalAmountString = JOptionPane.showInputDialog(ClientATM_MainMenu.this, "Enter withdrawal amount:");
-                try {
-                    double withdrawalAmount = Double.parseDouble(withdrawalAmountString);
-                    //Perform withdrawal operation
-                    withdrawal(withdrawalAmount);
-                    //Log the withdrawal
-                    logAction(user, "withdrawal", withdrawalAmount);
-                } catch (NumberFormatException ex) {
-                    //If user enters invalid input
-                    JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Invalid amount. Please enter a valid number.");
-                }
+                // Call withdrawal handler
+                new Withdrawal(ClientATM_MainMenu.this, currentUser).handleWithdrawal();
             }
         });
 
@@ -79,20 +59,13 @@ public class ClientATM_MainMenu extends JFrame{
         balanceInquiry.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                //Show user's balance
-                JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Your current balance is: $" + String.format("%.2f", balance));
-                //Log the balance inquiry
-                logAction(user, "balance inquiry", balance);
+                // Call balance inquiry handler
+                new BalanceInquiry(ClientATM_MainMenu.this, currentUser, balance).handleBalanceInquiry();
             }
         });
     }
 
     //Method to handle deposit operation
-    private void deposit(double amount) {
-        balance += amount; //Update balance
-        saveBalances(); //Save balance to file
-        JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Deposit of $" + String.format("%.2f", amount) + " successful. New balance: $" + String.format("%.2f", balance));
-    }
 
     //Method to handle withdrawal operation
     private void withdrawal(double amount) {
@@ -106,7 +79,7 @@ public class ClientATM_MainMenu extends JFrame{
     }
 
     //Method to log user actions
-    private void logAction(String user, String action, double amount) {
+    void logAction(String user, String action, double amount) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("audit_log.txt", true))) {
             //Get current time
             LocalDateTime currentTime = LocalDateTime.now();
@@ -141,7 +114,7 @@ public class ClientATM_MainMenu extends JFrame{
     }
 
     //Method to save user balances to file
-    private void saveBalances() {
+    void saveBalances() {
         userBalanceMap.put(currentUser, balance);
         try (PrintWriter writer = new PrintWriter(new FileWriter("bankData.txt"))) {
             for (Map.Entry<String, Double> entry : userBalanceMap.entrySet()) {
