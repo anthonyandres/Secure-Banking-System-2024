@@ -152,11 +152,78 @@ public class BankServerThread extends Thread{
                         writer.append(fileContents);
                         writer.flush();
 
-
+                        //logging into audit_log.txt
+                        logAction(user, "deposit", depositAmount);
                         break;
 
                     case "withdrawal":
-                        System.out.println("\nuser wants to withdrawal");
+                        //read master key file for this thread to get the master key
+                        ObjectInputStream masterinputwithdrawal = new ObjectInputStream(new FileInputStream("MasterKey.xx"));
+                        SecretKey masterKeyWithdrawal = (SecretKey) masterinputwithdrawal.readObject();
+                        masterinputwithdrawal.close();
+
+                        String userWithdrawal = input.readLine();
+
+                        //reading how much the user has and sending it to them
+                        Scanner scannerWithdrawal = new Scanner(new File("bankData.txt"));
+                        while(scannerWithdrawal.hasNextLine()){
+                            String line = scannerWithdrawal.nextLine();
+                            if(line.startsWith(userWithdrawal)){
+                                String[] parts = line.split(" ");
+
+                                //encrypting+MAC the balance of the user
+                                DES desTMP = new DES(masterKeyWithdrawal);
+                                MAC macTMP = new MAC();
+                                String createdMacTMP = macTMP.createMAC(parts[1], masterKeyWithdrawal);
+                                String balance = parts[1] + " " + createdMacTMP;
+                                String encryptedBalance = desTMP.encrypt(balance);
+                                output.println(encryptedBalance);
+                                System.out.println(userWithdrawal + " has $" + String.format("%.2f" ,Double.parseDouble(parts[1])));
+                                System.out.println("||sending secure data: " + balance + "||\nencrypted="+encryptedBalance);
+                                break;
+                            }
+                        }
+                        scannerWithdrawal.close();
+
+                        //receiving the encrypted+MAC withdrawal amount from client ATM
+                        DES desWithdrawal = new DES(masterKeyWithdrawal);
+                        MAC macWithdrawal = new MAC();
+                        String userWithdrawlToDecrypt = input.readLine();
+                        String userWithdrawalMAC = desWithdrawal.decrypt(userWithdrawlToDecrypt);
+                        System.out.println("decrypted data: " + userWithdrawalMAC);
+                        //result[0] contains deposit amount
+                        //result[1] contains MAC for deposit amount
+                        String[] resultWithdrawal = userWithdrawalMAC.split(" ");
+                        String recreatedMacWithdrawal = macWithdrawal.createMAC(resultWithdrawal[0], masterKeyWithdrawal);
+                        System.out.println("recreated Mac: " + resultWithdrawal[1] + "\nmatched MAC!");
+                        String withdrawalAmountString = resultWithdrawal[0];
+                        Double withdrawalAmount = Double.parseDouble(withdrawalAmountString);
+
+
+                        //updating bankData.txt
+                        scannerWithdrawal = new Scanner(new File("bankData.txt"));
+                        StringBuffer bufferWithdrawal = new StringBuffer();
+                        while(scannerWithdrawal.hasNextLine()){
+                            String line = scannerWithdrawal.nextLine();
+                            if(line.startsWith(userWithdrawal)){
+                                String[] parts = line.split(" ");
+                                Double balance = Double.parseDouble(parts[1]);
+                                balance = balance - withdrawalAmount;
+                                String newBalance = String.format("%.2f", balance);
+                                bufferWithdrawal.append(userWithdrawal + " " + newBalance+System.lineSeparator());
+                            }
+                            else {
+                                bufferWithdrawal.append(line+System.lineSeparator());
+                            }
+                        }
+                        String fileContentsWithdrawal = bufferWithdrawal.toString();
+                        System.out.println("Contents of the file: " + fileContentsWithdrawal);
+                        FileWriter writerWrtithdrawal = new FileWriter("bankData.txt");
+                        writerWrtithdrawal.append(fileContentsWithdrawal);
+                        writerWrtithdrawal.flush();
+
+                        //logging into audit_log.txt
+                        logAction(userWithdrawal, "withdrawal", withdrawalAmount);
                         break;
 
                     case "inquiry":
@@ -177,19 +244,6 @@ public class BankServerThread extends Thread{
         }
     }
 
-//    //Method to save user balances to file
-//    void saveBalances() {
-//        //userBalanceMap.put(currentUser, balance);
-//        try (PrintWriter writer = new PrintWriter(new FileWriter("bankData.txt"))) {
-//            for (Map.Entry<String, Double> entry : userBalanceMap.entrySet()) {
-//                writer.println(entry.getKey() + " " + entry.getValue());
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Error saving user balances to file.");
-//        }
-//    }
-
     //Method to log user actions
     void logAction(String user, String action, double amount) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("audit_log.txt", true))) {
@@ -200,11 +254,11 @@ public class BankServerThread extends Thread{
 
             //Write log entry to file
             writer.println(user + " " + action + " $" + String.format("%.2f", amount) + " " + formattedTime);
-            output.println("success");
+            //output.println("success");
         } catch (IOException e) {
             e.printStackTrace();
             //If unable to write to file
-            output.println("error");
+            //output.println("error");
 
             //show this on the main menu after receiving "error"
             //JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Error writing to audit log!");

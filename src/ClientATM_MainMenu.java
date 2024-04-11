@@ -74,7 +74,6 @@ public class ClientATM_MainMenu extends JFrame{
                     output.println(encryptedDepositMac);
 
 
-
                 } catch (UnknownHostException e2) {
                     System.err.println("Don't know about host " + hostName);
                     System.exit(1);
@@ -103,30 +102,37 @@ public class ClientATM_MainMenu extends JFrame{
                 ){
                     output.println("withdrawal");
                     output.println(user);
+                    //String balance = input.readLine();
 
-                    //get amount needed to deposit, since this is being sent it must be secure
-                    //append with MAC to ensure integrity, then encrypt to ensure confidentiality
-                    loadBalances();
+                    DES des = new DES(masterKey);
+                    MAC mac = new MAC();
+                    String balanceToDecrypt = input.readLine();
+                    String balanceWithMac = des.decrypt(balanceToDecrypt);
+                    System.out.println("decrypted data: " + balanceWithMac);
+                    //result[0] contains deposit amount
+                    //result[1] contains MAC for deposit amount
+                    String[] resultBalance = balanceWithMac.split(" ");
+                    String recreatedMacBalance = mac.createMAC(resultBalance[0], masterKey);
+                    System.out.println("recreated Mac: " + resultBalance[1] + "\nmatched MAC!");
+                    String totalBalanceString = resultBalance[0];
+                    Double balanceDouble = Double.parseDouble(totalBalanceString);
+
                     String withdrawalAmountString = JOptionPane.showInputDialog("Enter withdrawal amount:");
                     double withdrawalAmount = Double.parseDouble(withdrawalAmountString);
-                    if (balance >= withdrawalAmount) {
-                        balance -= withdrawalAmount; // Update balance
-                        saveBalances();
-
-                        withdrawalAmountString = withdrawalAmountString.concat(" ");//add whitespace to separate MAC
-                        DES des = new DES(masterKey);
-                        MAC mac = new MAC();
-                        String MAC = mac.createMAC(withdrawalAmountString, masterKey);
-                        String withdrawalMACAppend = withdrawalAmountString.concat(MAC);
-                        String encryptedWithdrawalMac = des.encrypt(withdrawalMACAppend);
-                        System.out.println("sending secure data: " + withdrawalMACAppend);
-
-                        //sending encrypted amount, bank will deal with it and update the bankData (bankData is meant for the bank ONLY)
-                        output.println(encryptedWithdrawalMac);
-                    }
-                    else{
+                    if(withdrawalAmount > balanceDouble){
                         JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Insufficient funds.");
                     }
+                    else{
+                        //encrypt and append with MAC
+                        //generate MAC
+                        String MACstring = mac.createMAC(withdrawalAmountString, masterKey);
+                        withdrawalAmountString = withdrawalAmountString.concat(" ");//add whitespace to separate message with MAC
+                        String withdrawalMACAppend = withdrawalAmountString.concat(MACstring);
+                        String encryptedDepositMac = des.encrypt(withdrawalMACAppend);
+                        System.out.println("||sending secure data: " + withdrawalMACAppend + "||\nencrypted="+encryptedDepositMac);
+                        output.println(encryptedDepositMac);
+                    }
+
 
                 } catch (UnknownHostException e2) {
                     System.err.println("Don't know about host " + hostName);
