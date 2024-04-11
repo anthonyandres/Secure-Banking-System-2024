@@ -121,6 +121,7 @@ public class ClientATM_MainMenu extends JFrame{
                     double withdrawalAmount = Double.parseDouble(withdrawalAmountString);
                     if(withdrawalAmount > balanceDouble){
                         JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Insufficient funds.");
+                        output.println("error");
                     }
                     else{
                         //encrypt and append with MAC
@@ -161,7 +162,22 @@ public class ClientATM_MainMenu extends JFrame{
                         BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
                 ){
                     output.println("inquiry");
-                    //all user prompts (if any) go here
+                    output.println(user);
+
+                    DES des = new DES(masterKey);
+                    MAC mac = new MAC();
+                    String balanceToDecrypt = input.readLine();
+                    String balanceWithMac = des.decrypt(balanceToDecrypt);
+                    System.out.println("decrypted data: " + balanceWithMac);
+                    //result[0] contains deposit amount
+                    //result[1] contains MAC for deposit amount
+                    String[] resultBalance = balanceWithMac.split(" ");
+                    String recreatedMacBalance = mac.createMAC(resultBalance[0], masterKey);
+                    System.out.println("recreated Mac: " + resultBalance[1] + "\nmatched MAC!");
+                    String totalBalanceString = resultBalance[0];
+                    Double balanceDouble = Double.parseDouble(totalBalanceString);
+
+                    JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Balance:\n" + "$" + String.format("%.2f", balanceDouble));
 
 
 

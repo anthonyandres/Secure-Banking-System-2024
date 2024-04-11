@@ -189,6 +189,9 @@ public class BankServerThread extends Thread{
                         DES desWithdrawal = new DES(masterKeyWithdrawal);
                         MAC macWithdrawal = new MAC();
                         String userWithdrawlToDecrypt = input.readLine();
+                        if(userWithdrawlToDecrypt.equals("error")){
+                            break;
+                        }
                         String userWithdrawalMAC = desWithdrawal.decrypt(userWithdrawlToDecrypt);
                         System.out.println("decrypted data: " + userWithdrawalMAC);
                         //result[0] contains deposit amount
@@ -227,7 +230,33 @@ public class BankServerThread extends Thread{
                         break;
 
                     case "inquiry":
-                        System.out.println("\nuser wants to check balance");
+                        //read master key file for this thread to get the master key
+                        ObjectInputStream masterinputinquiry = new ObjectInputStream(new FileInputStream("MasterKey.xx"));
+                        SecretKey masterKeyInquiry = (SecretKey) masterinputinquiry.readObject();
+                        masterinputinquiry.close();
+
+                        String userInquiry = input.readLine();
+
+                        //reading how much the user has and sending it to them
+                        Scanner scannerInquiry = new Scanner(new File("bankData.txt"));
+                        while(scannerInquiry.hasNextLine()){
+                            String line = scannerInquiry.nextLine();
+                            if(line.startsWith(userInquiry)){
+                                String[] parts = line.split(" ");
+
+                                //encrypting+MAC the balance of the user
+                                DES desTMP = new DES(masterKeyInquiry);
+                                MAC macTMP = new MAC();
+                                String createdMacTMP = macTMP.createMAC(parts[1], masterKeyInquiry);
+                                String balance = parts[1] + " " + createdMacTMP;
+                                String encryptedBalance = desTMP.encrypt(balance);
+                                output.println(encryptedBalance);
+                                System.out.println(userInquiry + " has $" + String.format("%.2f" ,Double.parseDouble(parts[1])));
+                                System.out.println("||sending secure data: " + balance + "||\nencrypted="+encryptedBalance);
+                                break;
+                            }
+                        }
+                        scannerInquiry.close();
                         break;
 
                     default:
