@@ -3,6 +3,8 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -37,34 +39,64 @@ public class ClientATM_Login extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 String username = Username.getText();
                 String password = Password.getText();
+                String hostName = "localhost";
+                int portNumber = 4444;
 
-                File users = new File("users.txt");
-                Scanner scanner;
-                try {
-                    scanner = new Scanner(users);
-                } catch (FileNotFoundException ex) {
-                    throw new RuntimeException(ex);
-                }
+                try(
+                        Socket kkSocket = new Socket(hostName, portNumber);
+                        PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
+                ){
+                    output.println("login");
 
-                boolean invalid = true;
-                //loop through entire list of users
-                while (scanner.hasNextLine()) {
-                    String userPass = scanner.nextLine();
-                    String[] verify = userPass.split("\\s+");
+                    DES desLR = new DES(masterKey);
+                    MAC macLR = new MAC();
 
-                    //if username and password match, successful login
-                    if(Objects.equals(verify[0], username) && Objects.equals(verify[1], password)){
+                    //Creating MAC and appending to username and password for encryption
+                    String usernameMAC = macLR.createMAC(username, masterKey);
+                    String passwordMAC = macLR.createMAC(password, masterKey);
+                    String usernameToEncrypt = username + " " + usernameMAC;
+                    String paswordToEncrypt = password + " " + passwordMAC;
+
+                    //encrypting username and password + MAC
+                    String encryptedMACUsername = desLR.encrypt(usernameToEncrypt);
+                    String encryptedMACpassword = desLR.encrypt(paswordToEncrypt);
+
+                    //sending securely to bank server
+                    output.println(encryptedMACUsername);
+                    output.println(encryptedMACpassword);
+                    System.out.println("||Sending login information securely: " + usernameMAC + " " + passwordMAC + "||\nencrypted="+encryptedMACUsername + "\nencrypted="+encryptedMACpassword);
+
+                    //receiving result securely
+                    String toDecryptResult = input.readLine();
+                    String decryptedResultMAC = desLR.decrypt(toDecryptResult);
+                    System.out.println("decrypted data: " + decryptedResultMAC);
+                    //result[0] contains deposit amount
+                    //result[1] contains MAC for deposit amount
+                    String[] resultResult = decryptedResultMAC.split(" ");
+                    String recreatedMacBalance = macLR.createMAC(resultResult[0], masterKey);
+                    System.out.println("recreated Mac: " + resultResult[1] + "\nmatched MAC!");
+                    String resultString = resultResult[0];
+
+                    if(resultString.equals("success")){
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Login Success!\nusername: " + username + "\npassword: " + password);
-                        invalid = false;
                         ClientATM_Login.this.dispose();
-                        //ClientATM_Login.this.setVisible(false);
                         new ClientATM_MainMenu(username, masterKey);
-                        break;
                     }
-                }
-                //if no successful loin show new pane for invalid loin
-                if(invalid==true){
-                    JOptionPane.showMessageDialog(ClientATM_Login.this, "Invalid Login!");
+                    else if (resultString.equals("failure")) {
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Invalid Login!");
+                    }
+
+
+                } catch (UnknownHostException e2) {
+                    System.err.println("Don't know about host " + hostName);
+                    System.exit(1);
+                } catch (IOException e2) {
+                    System.err.println("Couldn't get I/O for the connection to " +
+                            hostName);
+                    System.exit(1);
+                } catch (Exception e2) {
+                    throw new RuntimeException(e2);
                 }
             }
         });
@@ -74,33 +106,101 @@ public class ClientATM_Login extends JFrame{
             public void actionPerformed(ActionEvent e) {
                 String username = Username.getText();
                 String password = Password.getText();
+                String hostName = "localhost";
+                int portNumber = 4444;
 
-                // Validate if username already exists
-                if (isUsernameExists(username)) {
-                    JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
-                } else {
-                    // If username is unique, append it to the users.txt file
-                    try (FileWriter fw = new FileWriter("users.txt", true);
-                         BufferedWriter bw = new BufferedWriter(fw);
-                         PrintWriter out = new PrintWriter(bw)) {
-                        out.print("\n"+username + " " + password);
-                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
-                    } catch (IOException ex) {
+                try(
+                        Socket kkSocket = new Socket(hostName, portNumber);
+                        PrintWriter output= new PrintWriter(kkSocket.getOutputStream(), true);
+                        BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
+                ){
+                    output.println("register");
+
+                    DES desLR = new DES(masterKey);
+                    MAC macLR = new MAC();
+
+                    //Creating MAC and appending to username and password for encryption
+                    String usernameMAC = macLR.createMAC(username, masterKey);
+                    String passwordMAC = macLR.createMAC(password, masterKey);
+                    String usernameToEncrypt = username + " " + usernameMAC;
+                    String paswordToEncrypt = password + " " + passwordMAC;
+
+                    //encrypting username and password + MAC
+                    String encryptedMACUsername = desLR.encrypt(usernameToEncrypt);
+                    String encryptedMACpassword = desLR.encrypt(paswordToEncrypt);
+
+                    //sending securely to bank server
+                    output.println(encryptedMACUsername);
+                    output.println(encryptedMACpassword);
+                    System.out.println("||Sending register information securely: " + usernameMAC + " " + passwordMAC + "||\nencrypted="+encryptedMACUsername + "\nencrypted="+encryptedMACpassword);
+
+                    //receiving result securely
+                    String toDecryptResult = input.readLine();
+                    String decryptedResultMAC = desLR.decrypt(toDecryptResult);
+                    System.out.println("decrypted data: " + decryptedResultMAC);
+                    //result[0] contains deposit amount
+                    //result[1] contains MAC for deposit amount
+                    String[] resultResult = decryptedResultMAC.split(" ");
+                    String recreatedMacBalance = macLR.createMAC(resultResult[0], masterKey);
+                    System.out.println("recreated Mac: " + resultResult[1] + "\nmatched MAC!");
+                    String resultString = resultResult[0];
+
+                    if(resultString.equals("success")){
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Login Success!\nusername: " + username + "\npassword: " + password);
+                        ClientATM_Login.this.dispose();
+                        new ClientATM_MainMenu(username, masterKey);
+                    }
+                    else if (resultString.equals("failure")) {
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
+                    }
+                    else if(resultString.equals("error")){
                         JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
-                        ex.printStackTrace();
                     }
 
-                    // After successful registration, add default bank data (0 dollars to user's account)
-                    try (FileWriter fw = new FileWriter("bankData.txt", true);
-                         BufferedWriter bw = new BufferedWriter(fw);
-                         PrintWriter out = new PrintWriter(bw)) {
-                        out.print(username + " 0");
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
-                        ex.printStackTrace();
-                    }
 
+                } catch (UnknownHostException e2) {
+                    System.err.println("Don't know about host " + hostName);
+                    System.exit(1);
+                } catch (IOException e2) {
+                    System.err.println("Couldn't get I/O for the connection to " +
+                            hostName);
+                    System.exit(1);
+                } catch (Exception e2) {
+                    throw new RuntimeException(e2);
                 }
+
+
+
+
+//                String username = Username.getText();
+//                String password = Password.getText();
+//
+//                // Validate if username already exists
+//                if (isUsernameExists(username)) {
+//                    JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
+//                } else {
+//                    // If username is unique, append it to the users.txt file
+//                    try (FileWriter fw = new FileWriter("users.txt", true);
+//                         BufferedWriter bw = new BufferedWriter(fw);
+//                         PrintWriter out = new PrintWriter(bw)) {
+//                        out.print("\n"+username + " " + password);
+//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
+//                    } catch (IOException ex) {
+//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
+//                        ex.printStackTrace();
+//                    }
+//
+//                    // After successful registration, add default bank data (0 dollars to user's account)
+//                    try (FileWriter fw = new FileWriter("bankData.txt", true);
+//                         BufferedWriter bw = new BufferedWriter(fw);
+//                         PrintWriter out = new PrintWriter(bw)) {
+//                        out.print(username + " 0");
+//                    } catch (IOException ex) {
+//                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
+//                        ex.printStackTrace();
+//                    }
+//
+//                }
             }
         });
     }

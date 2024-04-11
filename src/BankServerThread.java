@@ -7,12 +7,9 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Scanner;
 
 public class BankServerThread extends Thread{
     static int nonce = 1 + (int)(Math.random() * 99999.0);
@@ -259,6 +256,156 @@ public class BankServerThread extends Thread{
                         scannerInquiry.close();
                         break;
 
+                    case "login":
+                        //read master key file for this thread to get the master key
+                        ObjectInputStream masterinputLR = new ObjectInputStream(new FileInputStream("MasterKey.xx"));
+                        SecretKey masterKeyLR = (SecretKey) masterinputLR.readObject();
+                        masterinputLR.close();
+
+                        //receiving secure username and password
+                        String userLRToDecrypt = input.readLine();
+                        String passLRToDecrypt = input.readLine();
+
+                        //decrypting and checking MAC
+                        //receiving the encrypted+MAC withdrawal amount from client ATM
+                        DES desLR = new DES(masterKeyLR);
+                        MAC macLR = new MAC();
+
+                        String usernameMAC = desLR.decrypt(userLRToDecrypt);
+                        String passwordMAC = desLR.decrypt(passLRToDecrypt);
+                        System.out.println("decrypted username: " + usernameMAC);
+                        System.out.println("decrypted password: " + passwordMAC);
+                        //result[0] contains deposit amount
+                        //result[1] contains MAC for deposit amount
+                        String[] userResult = usernameMAC.split(" ");
+                        String[] passResult = passwordMAC.split(" ");
+                        String recreatedMacUsername = macLR.createMAC(userResult[0], masterKeyLR);
+                        String recreatedMacPassword = macLR.createMAC(passResult[0], masterKeyLR);
+                        System.out.println("recreated Username Mac: " + userResult[1] + "\nmatched MAC!");
+                        System.out.println("recreated Password Mac: " + passResult[1] + "\nmatched MAC!");
+                        String username = userResult[0];
+                        String password = passResult[0];
+
+                        File users = new File("users.txt");
+                        Scanner scannerLR;
+                        try {
+                            scannerLR = new Scanner(users);
+                        } catch (FileNotFoundException ex) {
+                            throw new RuntimeException(ex);
+                        }
+
+                        boolean invalid = true;
+                        //loop through entire list of users
+                        while (scannerLR.hasNextLine()) {
+                            String userPass = scannerLR.nextLine();
+                            String[] verify = userPass.split("\\s+");
+
+                            //if username and password match, successful login
+                            if(Objects.equals(verify[0], username) && Objects.equals(verify[1], password)){
+                                //JOptionPane.showMessageDialog(ClientATM_Login.this, "Login Success!\nusername: " + username + "\npassword: " + password);
+                                invalid = false;
+                                String successMAC = macLR.createMAC("success", masterKeyLR);
+                                String toEncryptSuccess = "success " + successMAC;
+                                String encryptedSuccess = desLR.encrypt(toEncryptSuccess);
+                                output.println(encryptedSuccess);
+                                System.out.println("||Login success, letting ATM know securely: " + toEncryptSuccess + "||\nencrypted="+encryptedSuccess);
+                                //ClientATM_Login.this.dispose();
+                                //new ClientATM_MainMenu(username, masterKey);
+                                break;
+                            }
+                        }
+                        //if no successful login show new pane for invalid loin
+                        if(invalid==true){
+                            String successMAC = macLR.createMAC("failure", masterKeyLR);
+                            String toEncryptFailure = "failure " + successMAC;
+                            String encryptedFailure = desLR.encrypt(toEncryptFailure);
+                            output.println(encryptedFailure);
+                            System.out.println("||Login failed, letting ATM know securely: " + toEncryptFailure + "||\nencrypted="+encryptedFailure);
+                            output.println(encryptedFailure);
+                            //JOptionPane.showMessageDialog(ClientATM_Login.this, "Invalid Login!");
+                        }
+                        break;
+
+                    case "register":
+                        //read master key file for this thread to get the master key
+                        ObjectInputStream masterinputRE = new ObjectInputStream(new FileInputStream("MasterKey.xx"));
+                        SecretKey masterKeyRE = (SecretKey) masterinputRE.readObject();
+                        masterinputRE.close();
+
+                        //receiving secure username and password
+                        String userREToDecrypt = input.readLine();
+                        String passREToDecrypt = input.readLine();
+
+                        //decrypting and checking MAC
+                        //receiving the encrypted+MAC withdrawal amount from client ATM
+                        DES desRE = new DES(masterKeyRE);
+                        MAC macRE = new MAC();
+
+                        String usernameMACRE = desRE.decrypt(userREToDecrypt);
+                        String passwordMACRE = desRE.decrypt(passREToDecrypt);
+                        System.out.println("decrypted username: " + usernameMACRE);
+                        System.out.println("decrypted password: " + passwordMACRE);
+                        //result[0] contains deposit amount
+                        //result[1] contains MAC for deposit amount
+                        String[] userResultRE = usernameMACRE.split(" ");
+                        String[] passResultRE = passwordMACRE.split(" ");
+                        String recreatedMacUsernameRE = macRE.createMAC(userResultRE[0], masterKeyRE);
+                        String recreatedMacPasswordRE = macRE.createMAC(passResultRE[0], masterKeyRE);
+                        System.out.println("recreated Username Mac: " + userResultRE[1] + "\nmatched MAC!");
+                        System.out.println("recreated Password Mac: " + passResultRE[1] + "\nmatched MAC!");
+                        String usernameRE = userResultRE[0];
+                        String passwordRE = passResultRE[0];
+
+
+                        // Validate if username already exists
+                        if (isUsernameExists(usernameRE)) {
+                            //JOptionPane.showMessageDialog(ClientATM_Login.this, "Username already exists!");
+                            //securely sending failure
+                            String successMAC = macRE.createMAC("failure", masterKeyRE);
+                            String toEncryptFailure = "failure " + successMAC;
+                            String encryptedFailure = desRE.encrypt(toEncryptFailure);
+                            output.println(encryptedFailure);
+                            System.out.println("||Registration failed, letting ATM know securely: " + toEncryptFailure + "||\nencrypted="+encryptedFailure);
+                            output.println(encryptedFailure);
+                        } else {
+                            // If username is unique, append it to the users.txt file
+                            try (FileWriter fw = new FileWriter("users.txt", true);
+                                 BufferedWriter bw = new BufferedWriter(fw);
+                                 PrintWriter out = new PrintWriter(bw)) {
+                                out.print("\n"+usernameRE + " " + passwordRE);
+
+                                //securely sending success
+                                String successMAC = macRE.createMAC("success", masterKeyRE);
+                                String toEncryptSuccess = "success " + successMAC;
+                                String encryptedSuccess = desRE.encrypt(toEncryptSuccess);
+                                output.println(encryptedSuccess);
+                                System.out.println("||Registration success, letting ATM know securely: " + toEncryptSuccess + "||\nencrypted="+encryptedSuccess);
+                                output.println(encryptedSuccess);
+                                //JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
+                            } catch (IOException ex) {
+                                String errorMAC = macRE.createMAC("error", masterKeyRE);
+                                String toEncryptError = "error " + errorMAC;
+                                String encryptedError = desRE.encrypt(toEncryptError);
+                                output.println(encryptedError);
+                                System.out.println("||Login success, letting ATM know securely: " + toEncryptError + "||\nencrypted="+encryptedError);
+                                output.println(encryptedError);
+                                //JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while registering!");
+                                ex.printStackTrace();
+                            }
+
+                            // After successful registration, add default bank data (0 dollars to user's account)
+                            try (FileWriter fw = new FileWriter("bankData.txt", true);
+                                 BufferedWriter bw = new BufferedWriter(fw);
+                                 PrintWriter out = new PrintWriter(bw)) {
+                                out.print(usernameRE + " 0");
+                            } catch (IOException ex) {
+//                                JOptionPane.showMessageDialog(ClientATM_Login.this, "Error occurred while creating account!");
+                                ex.printStackTrace();
+                            }
+
+                        }
+                        break;
+
                     default:
                         System.out.println("\nUnexpected Behaviour");
                         break;
@@ -292,5 +439,22 @@ public class BankServerThread extends Thread{
             //show this on the main menu after receiving "error"
             //JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Error writing to audit log!");
         }
+    }
+
+    // Method to check if username already exists
+    private boolean isUsernameExists(String username) {
+        File users = new File("users.txt");
+        try (Scanner scanner = new Scanner(users)) {
+            while (scanner.hasNextLine()) {
+                String userPass = scanner.nextLine();
+                String[] verify = userPass.split("\\s+");
+                if (Objects.equals(verify[0], username)) {
+                    return true; // Username already exists
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return false; // Username is unique
     }
 }
