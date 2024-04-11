@@ -65,19 +65,6 @@ public class ClientATM_MainMenu extends JFrame{
         });
     }
 
-    //Method to handle deposit operation
-
-    //Method to handle withdrawal operation
-    private void withdrawal(double amount) {
-        if (balance >= amount) {
-            balance -= amount; //Update balance
-            saveBalances(); //Save balance to file
-            JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Withdrawal of $" + String.format("%.2f", amount) + " successful. New balance: $" + String.format("%.2f", balance));
-        } else {
-            JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Insufficient funds.");
-        }
-    }
-
     //Method to log user actions
     void logAction(String user, String action, double amount) {
         try (PrintWriter writer = new PrintWriter(new FileWriter("audit_log.txt", true))) {
