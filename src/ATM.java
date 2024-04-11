@@ -115,7 +115,8 @@ public class ATM {
 
 
             //after authentication call GUI forms:
-
+            System.out.println("\n\n authenticated user, proceeding to login...");
+            new ClientATM_Login();
 
         } catch (UnknownHostException e) {
             System.err.println("Don't know about host " + hostName);
