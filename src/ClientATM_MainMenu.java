@@ -102,9 +102,31 @@ public class ClientATM_MainMenu extends JFrame{
                         BufferedReader input = new BufferedReader(new InputStreamReader(kkSocket.getInputStream()));
                 ){
                     output.println("withdrawal");
-                    //all user prompts go here
+                    output.println(user);
 
+                    //get amount needed to deposit, since this is being sent it must be secure
+                    //append with MAC to ensure integrity, then encrypt to ensure confidentiality
+                    loadBalances();
+                    String withdrawalAmountString = JOptionPane.showInputDialog("Enter withdrawal amount:");
+                    double withdrawalAmount = Double.parseDouble(withdrawalAmountString);
+                    if (balance >= withdrawalAmount) {
+                        balance -= withdrawalAmount; // Update balance
+                        saveBalances();
 
+                        withdrawalAmountString = withdrawalAmountString.concat(" ");//add whitespace to separate MAC
+                        DES des = new DES(masterKey);
+                        MAC mac = new MAC();
+                        String MAC = mac.createMAC(withdrawalAmountString, masterKey);
+                        String withdrawalMACAppend = withdrawalAmountString.concat(MAC);
+                        String encryptedWithdrawalMac = des.encrypt(withdrawalMACAppend);
+                        System.out.println("sending secure data: " + withdrawalMACAppend);
+
+                        //sending encrypted amount, bank will deal with it and update the bankData (bankData is meant for the bank ONLY)
+                        output.println(encryptedWithdrawalMac);
+                    }
+                    else{
+                        JOptionPane.showMessageDialog(ClientATM_MainMenu.this, "Insufficient funds.");
+                    }
 
                 } catch (UnknownHostException e2) {
                     System.err.println("Don't know about host " + hostName);
