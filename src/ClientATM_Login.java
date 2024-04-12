@@ -146,7 +146,7 @@ public class ClientATM_Login extends JFrame{
                     String resultString = resultResult[0];
 
                     if(resultString.equals("success")){
-                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Login Success!\nusername: " + username + "\npassword: " + password);
+                        JOptionPane.showMessageDialog(ClientATM_Login.this, "Registration successful!\nAccount created with $0.00.");
                         ClientATM_Login.this.dispose();
                         new ClientATM_MainMenu(username, masterKey);
                     }

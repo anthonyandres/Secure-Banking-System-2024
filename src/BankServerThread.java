@@ -254,6 +254,8 @@ public class BankServerThread extends Thread{
                             }
                         }
                         scannerInquiry.close();
+                        Double zeroIN = 0.0;
+                        logAction(userInquiry, "Balance Inquiry", zeroIN);
                         break;
 
                     case "login":
